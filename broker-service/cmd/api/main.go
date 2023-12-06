@@ -2,13 +2,15 @@ package main
 
 import (
 	"log"
+	"net/http"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	router "github.com/go-microservice/broker-service/cmd/api/routes"
 )
 
 const webPort = "80"
+
+type Config struct{}
 
 func CORSConfig() cors.Config {
 	corsConfig := cors.DefaultConfig()
@@ -23,15 +25,23 @@ func CORSConfig() cors.Config {
 func main() {
 	gin.SetMode(gin.DebugMode)
 	app := gin.Default()
-	app.Use(gin.Logger())
 
 	//Specify cors
 	app.Use(cors.New(CORSConfig()))
+	GinRoutes(app)
 
 	log.Printf("Starting broker service on port %s\n", webPort)
 
 	//Define routing
-	app.GET("/ping")
-	router.GinRoutes(&app.RouterGroup)
 
+	srv := &http.Server{
+		Addr:    ":" + webPort,
+		Handler: app,
+	}
+
+	go func() {
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("listen: %s\n", err)
+		}
+	}()
 }

@@ -4,16 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func GinRoutes(app *gin.RouterGroup) {
-	api := app.Group("/v1")
-
+func GinRoutes(app *gin.Engine) {
 	//Heartbeat
-	api.GET("/ping")
+	app.GET("/ping", Ping)
 
 	//Routes
-	api.POST("", Broker)
-	api.POST("/test", Testing)
-	api.POST("/handle", HandleSubmission)
-
-	return
+	app.POST("/", Broker)
+	app.POST("/test", Testing)
+	app.POST("/handle", HandleSubmission)
 }
