@@ -1,6 +1,6 @@
 {{template "base" .}}
 
-{{define "content" }}
+{{define "content"}}
     <div class="container">
         <div class="row">
             <div class="col">
@@ -35,6 +35,7 @@
     <script>
     let brokerBtn = document.getElementById("brokerBtn");
     let authBrokerBtn = document.getElementById("authBrokerBtn");
+    let pingBtn = document.getElementById("pingBtn");
     let output = document.getElementById("output");
     let sent = document.getElementById("payload");
     let recevied = document.getElementById("received");
@@ -58,32 +59,38 @@
             headers: headers,
         }
 
-        fetch("http:\/\/localhost:80/handle", body)
+        fetch("http:\/\/localhost:8080/handler", body)
         .then((response) => response.json())
         .then((data) => {
             sent.innerHTML = JSON.stringify(payload, undefined, 4);
             received.innerHTML = JSON.stringify(data, undefined, 4);
+            console.log("received", received)
             if (data.error) {
                 output.innerHTML += `<br><strong>Error:</strong> ${data.message}`;
             } else {
-                output.innerHTML += `<br><strong>Response from broker service</strong>: ${data.message}`;
+                output.innerHTML += `<br><strong>Response from auth service</strong>: ${data.message}`;
             }
         })
         .catch((error) => {
-            output.innerHTML += "<br><br>Eror: " + error;
+            output.innerHTML += "<br><br>Error: " + error;
         })
     })
 
     brokerBtn.addEventListener("click", function() {
+        const headers = new Headers();
+        headers.append("Content-Type", "application/json");
 
         const body = {
             method: 'POST',
+            headers: headers,
         }
 
-        fetch("http:\/\/localhost:80", body)
+        fetch("http:\/\/localhost:8080/broker", body)
+        {{/* console.log("this is the response :", response) */}}
         .then((response) => response.json())
         .then((data) => {
             sent.innerHTML ="empty post request";
+            console.log(sent)
             received.innerHTML = JSON.stringify(data, undefined, 4);
             if (data.error) {
                 console.log(data.message);

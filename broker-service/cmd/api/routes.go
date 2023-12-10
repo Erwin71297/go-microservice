@@ -9,7 +9,6 @@ func GinRoutes(app *gin.Engine) {
 	app.GET("/ping", Ping)
 
 	//Routes
-	app.POST("/", Broker)
-	app.POST("/test", Testing)
-	app.POST("/handle", HandleSubmission)
+	app.POST("/broker", Broker)
+	app.POST("/handler", HandleSubmission)
 }
