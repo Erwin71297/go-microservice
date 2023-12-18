@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -40,14 +41,16 @@ func HandleSubmission(c *gin.Context) {
 	var newPayload RequestPayload
 	newPayload.Action = "auth"
 	newPayload.Auth.Email = "admin@example.com"
-	newPayload.Auth.Password = "verysecret!"
+	newPayload.Auth.Password = "verysecret"
 
 	if requestPayload.Action == "" {
 		requestPayload = newPayload
 	}
+	log.Println(requestPayload)
 
 	err := ReadJSON(c, &requestPayload)
 	if err != nil {
+		log.Println("bahkan masih di sini")
 		ErrorJSON(c, err)
 		return
 	}
@@ -61,13 +64,18 @@ func HandleSubmission(c *gin.Context) {
 }
 
 func Authenticate(c *gin.Context, a AuthPayload) {
+	log.Println("enter here")
 
 	//Create some json that will be sent to the auth microservices
 	jsonData, _ := json.MarshalIndent(a, "", "\t")
+	log.Println("jsonData after ", jsonData)
+	jsonString := string(jsonData[:])
+	log.Println("jsonData string ", jsonString)
 
 	//Call the service
 	request, err := http.NewRequest("POST", "http://authentication-service/authenticate", bytes.NewBuffer(jsonData))
 	if err != nil {
+		log.Println("error req")
 		ErrorJSON(c, err)
 		return
 	}
@@ -75,17 +83,22 @@ func Authenticate(c *gin.Context, a AuthPayload) {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
+		log.Println("error res")
 		ErrorJSON(c, err)
 		return
 	}
 	defer response.Body.Close()
 
+	log.Println("response Status code: ", response)
+
 	//Make sure we get back the correct status
 	if response.StatusCode == http.StatusUnauthorized {
+		log.Println("error code 1")
 		ErrorJSON(c, errors.New("invalid credentials"))
 		return
 	} else if response.StatusCode != http.StatusAccepted {
-		ErrorJSON(c, errors.New("error calling auth service"))
+		log.Println("error code 2")
+		ErrorJSON(c, errors.New("error calling auth service"+err.Error()))
 		return
 	}
 
@@ -95,11 +108,13 @@ func Authenticate(c *gin.Context, a AuthPayload) {
 	//Decode json from auth service
 	err = json.NewDecoder(response.Body).Decode(&jsonFromService)
 	if err != nil {
+		log.Println("error decode")
 		ErrorJSON(c, err)
 		return
 	}
 
 	if jsonFromService.Error {
+		log.Println("error")
 		ErrorJSON(c, err, http.StatusUnauthorized)
 		return
 	}
@@ -111,7 +126,7 @@ func Authenticate(c *gin.Context, a AuthPayload) {
 
 	// WriteJSON(c, http.StatusAccepted, payload)
 	c.Bind(payload)
-	c.JSON(200, payload)
+	c.JSON(http.StatusAccepted, payload)
 }
 
 func Ping(c *gin.Context) {

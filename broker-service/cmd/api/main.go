@@ -10,8 +10,6 @@ import (
 
 const webPort = "80"
 
-type Config struct{}
-
 func CORSConfig() cors.Config {
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = []string{"http://localhost"}
@@ -28,7 +26,7 @@ func main() {
 
 	//Specify cors
 	app.Use(cors.New(CORSConfig()))
-	GinRoutes(app)
+	Routes(app)
 
 	log.Printf("Starting broker service on port %s\n", webPort)
 

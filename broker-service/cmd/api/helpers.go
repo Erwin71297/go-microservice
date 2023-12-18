@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,19 +16,16 @@ type jsonResponse struct {
 }
 
 func ReadJSON(c *gin.Context, data any) error {
-	maxBytes := 1048576 //One Megabyte
-
-	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, int64(maxBytes))
-
-	dec := json.NewDecoder(c.Request.Body)
-	err := dec.Decode(data)
-	if err != nil {
+	b, err := io.ReadAll(c.Request.Body)
+	if err == nil {
 		return err
 	}
 
-	err = dec.Decode(&struct{}{})
-	if err != io.EOF {
-		return errors.New("body must have only a single json value")
+	err = json.Unmarshal(b, data)
+	log.Println("data :", data)
+	if err != nil {
+		log.Println("masuk error unmarshal :", err.Error())
+		return err
 	}
 
 	return nil

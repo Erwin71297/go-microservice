@@ -3,12 +3,13 @@ package main
 import (
 	"authentication/data"
 	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/gin-contrib/cors"
+	"github.com/gin-gonic/gin"
 	_ "github.com/jackc/pgconn"
 	_ "github.com/jackc/pgx/v4"
 	_ "github.com/jackc/pgx/v4/stdlib"
@@ -23,40 +24,45 @@ type Config struct {
 	Models data.Models
 }
 
+func CORSConfig() cors.Config {
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowOrigins = []string{"http://localhost"}
+	corsConfig.AllowCredentials = true
+	corsConfig.AddAllowHeaders("Access-Control-Allow-Headers", "access-control-allow-origin, access-control-allow-headers", "Content-Type", "X-XSRF-TOKEN", "Accept", "Origin", "X-Requested-With", "Authorization")
+	corsConfig.AddAllowMethods("GET", "POST", "PUT", "DELETE")
+	corsConfig.MaxAge = 300
+	return corsConfig
+}
+
 func main() {
 	log.Println("Starting authentication service")
 
 	//connect DB
-	conn := connectToDB()
-	if conn == nil {
-		log.Panic("Can't connect to Postgres!")
-	}
+	// conn := connectToDB()
+	// if conn == nil {
+	// 	log.Panic("Can't connect to Postgres!")
+	// }
+	app := gin.Default()
+	//app.Use(ApiMiddleware(conn))
+	app.Use(cors.New(CORSConfig()))
+	Routes(app)
 
-	//setup config
-	app := Config{
-		DB:     conn,
-		Models: data.New(conn),
-	}
+	//Setup Config
 
 	srv := &http.Server{
-		Addr:    fmt.Sprintf(":%s", webPort),
-		Handler: app.routes(),
+		Addr:    ":" + webPort,
+		Handler: app,
 	}
 
-	err := srv.ListenAndServe()
-	if err != nil {
-		log.Panic(err)
+	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("listen: %s\n", err)
 	}
 }
 
 func openDB(dsn string) (*sql.DB, error) {
 	db, err := sql.Open("pgx", dsn)
 	if err != nil {
-		return nil, err
-	}
-
-	err = db.Ping()
-	if err != nil {
+		log.Println("error open")
 		return nil, err
 	}
 
@@ -65,6 +71,7 @@ func openDB(dsn string) (*sql.DB, error) {
 
 func connectToDB() *sql.DB {
 	dsn := os.Getenv("DSN")
+	//dsn := "host=localhost port=5432 user=postgres password=password dbname=users sslmode=disable timezone=UTC connect_timeout=15"
 
 	for {
 		connection, err := openDB(dsn)
@@ -84,5 +91,13 @@ func connectToDB() *sql.DB {
 		log.Println("Backing off for 2 seconds....")
 		time.Sleep(2 * time.Second)
 		continue
+	}
+}
+
+// ApiMiddleware will add the db connection to the context
+func ApiMiddleware(db *sql.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Set("databaseConn", db)
+		c.Next()
 	}
 }

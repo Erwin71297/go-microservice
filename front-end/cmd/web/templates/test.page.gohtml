@@ -46,7 +46,7 @@
             action: "auth",
             auth: {
                 email: "admin@example.com",
-                password: "verysecret!",
+                password: "verysecret",
             }
         }
 
@@ -64,7 +64,6 @@
         .then((data) => {
             sent.innerHTML = JSON.stringify(payload, undefined, 4);
             received.innerHTML = JSON.stringify(data, undefined, 4);
-            console.log("received", received)
             if (data.error) {
                 output.innerHTML += `<br><strong>Error:</strong> ${data.message}`;
             } else {
@@ -86,7 +85,6 @@
         }
 
         fetch("http:\/\/localhost:8080/broker", body)
-        {{/* console.log("this is the response :", response) */}}
         .then((response) => response.json())
         .then((data) => {
             sent.innerHTML ="empty post request";

@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -44,8 +45,8 @@ type User struct {
 }
 
 // GetAll returns a slice of all users, sorted by last name
-func (u *User) GetAll() ([]*User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func (u *User) GetAll(c *gin.Context) ([]*User, error) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), dbTimeout)
 	defer cancel()
 
 	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at
@@ -83,8 +84,8 @@ func (u *User) GetAll() ([]*User, error) {
 }
 
 // GetByEmail returns one user by email
-func (u *User) GetByEmail(email string) (*User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func (u *User) GetByEmail(c *gin.Context, email string) (*User, error) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), dbTimeout)
 	defer cancel()
 
 	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at from users where email = $1`
@@ -111,8 +112,8 @@ func (u *User) GetByEmail(email string) (*User, error) {
 }
 
 // GetOne returns one user by id
-func (u *User) GetOne(id int) (*User, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func (u *User) GetOne(c *gin.Context, id int) (*User, error) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), dbTimeout)
 	defer cancel()
 
 	query := `select id, email, first_name, last_name, password, user_active, created_at, updated_at from users where id = $1`
@@ -140,8 +141,9 @@ func (u *User) GetOne(id int) (*User, error) {
 
 // Update updates one user in the database, using the information
 // stored in the receiver u
-func (u *User) Update() error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func (u *User) Update(c *gin.Context) error {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), dbTimeout)
+
 	defer cancel()
 
 	stmt := `update users set
@@ -170,8 +172,8 @@ func (u *User) Update() error {
 }
 
 // Delete deletes one user from the database, by User.ID
-func (u *User) Delete() error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func (u *User) Delete(c *gin.Context) error {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), dbTimeout)
 	defer cancel()
 
 	stmt := `delete from users where id = $1`
@@ -185,8 +187,8 @@ func (u *User) Delete() error {
 }
 
 // DeleteByID deletes one user from the database, by ID
-func (u *User) DeleteByID(id int) error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func (u *User) DeleteByID(c *gin.Context, id int) error {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), dbTimeout)
 	defer cancel()
 
 	stmt := `delete from users where id = $1`
@@ -200,8 +202,8 @@ func (u *User) DeleteByID(id int) error {
 }
 
 // Insert inserts a new user into the database, and returns the ID of the newly inserted row
-func (u *User) Insert(user User) (int, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func (u *User) Insert(c *gin.Context, user User) (int, error) {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), dbTimeout)
 	defer cancel()
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
@@ -231,8 +233,8 @@ func (u *User) Insert(user User) (int, error) {
 }
 
 // ResetPassword is the method we will use to change a user's password.
-func (u *User) ResetPassword(password string) error {
-	ctx, cancel := context.WithTimeout(context.Background(), dbTimeout)
+func (u *User) ResetPassword(c *gin.Context, password string) error {
+	ctx, cancel := context.WithTimeout(c.Request.Context(), dbTimeout)
 	defer cancel()
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), 12)

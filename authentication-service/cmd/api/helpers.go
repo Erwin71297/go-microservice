@@ -2,37 +2,36 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
+	"log"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 type jsonResponse struct {
-	Error   bool        `json:"error"`
-	Message string      `json:"message"`
-	Data    interface{} `json:"data,omitempty"`
+	Error   bool   `json:"error"`
+	Message string `json:"message"`
+	Data    any    `json:"data,omitempty"`
 }
 
-func (app *Config) readJSON(w http.ResponseWriter, r *http.Request, data interface{}) error {
-	maxBytes := 1048576 //One Megabyte
-
-	r.Body = http.MaxBytesReader(w, r.Body, int64(maxBytes))
-
-	dec := json.NewDecoder(r.Body)
-	err := dec.Decode(data)
-	if err != nil {
+func ReadJSON(c *gin.Context, data any) error {
+	b, err := io.ReadAll(c.Request.Body)
+	if err == nil {
 		return err
 	}
 
-	err = dec.Decode(&struct{}{})
-	if err != io.EOF {
-		return errors.New("body must have only a single json value")
+	err = json.Unmarshal(b, data)
+	log.Println("data :", data)
+	if err != nil {
+		log.Println("masuk error unmarshal :", err.Error())
+		return err
 	}
 
 	return nil
 }
 
-func (app *Config) writeJSON(w http.ResponseWriter, status int, data interface{}, headers ...http.Header) error {
+func WriteJSON(c *gin.Context, status int, data any, headers ...http.Header) error {
 	out, err := json.Marshal(data)
 	if err != nil {
 		return err
@@ -40,14 +39,16 @@ func (app *Config) writeJSON(w http.ResponseWriter, status int, data interface{}
 
 	if len(headers) > 0 {
 		for key, value := range headers[0] {
-			w.Header()[key] = value
+			c.Request.Header[key] = value
 		}
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Headers", "*")
-	w.WriteHeader(status)
-	_, err = w.Write(out)
+	c.Request.Header.Set("Content-Type", "application/json")
+	c.Request.Header.Set("Access-Control-Allow-Headers", "*")
+
+	c.Writer.WriteHeader(status)
+
+	_, err = c.Writer.Write(out)
 	if err != nil {
 		return err
 	}
@@ -55,7 +56,7 @@ func (app *Config) writeJSON(w http.ResponseWriter, status int, data interface{}
 	return nil
 }
 
-func (app *Config) errorJSON(w http.ResponseWriter, err error, status ...int) error {
+func ErrorJSON(c *gin.Context, err error, status ...int) error {
 	statusCode := http.StatusBadRequest
 
 	if len(status) > 0 {
@@ -66,5 +67,5 @@ func (app *Config) errorJSON(w http.ResponseWriter, err error, status ...int) er
 	payload.Error = true
 	payload.Message = err.Error()
 
-	return app.writeJSON(w, statusCode, payload)
+	return WriteJSON(c, statusCode, payload)
 }
