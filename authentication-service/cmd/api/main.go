@@ -43,7 +43,6 @@ func main() {
 	// 	log.Panic("Can't connect to Postgres!")
 	// }
 	app := gin.Default()
-	//app.Use(ApiMiddleware(conn))
 	app.Use(cors.New(CORSConfig()))
 	Routes(app)
 
@@ -91,13 +90,5 @@ func connectToDB() *sql.DB {
 		log.Println("Backing off for 2 seconds....")
 		time.Sleep(2 * time.Second)
 		continue
-	}
-}
-
-// ApiMiddleware will add the db connection to the context
-func ApiMiddleware(db *sql.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Set("databaseConn", db)
-		c.Next()
 	}
 }
