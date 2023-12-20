@@ -13,11 +13,17 @@ import (
 type RequestPayload struct {
 	Action string      `json:"action"`
 	Auth   AuthPayload `json:"auth,omitempty"`
+	Log    LogPayload  `json:"log,omitempty"`
 }
 
 type AuthPayload struct {
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+type LogPayload struct {
+	Name string `json:"name"`
+	Data string `json:"data"`
 }
 
 func Broker(c *gin.Context) {
@@ -31,22 +37,11 @@ func Broker(c *gin.Context) {
 	response = payload
 	response.Data = "Broker was hit"
 
-	c.Bind(response)
 	c.JSON(200, response)
 }
 
 func HandleSubmission(c *gin.Context) {
 	var requestPayload RequestPayload
-
-	var newPayload RequestPayload
-	newPayload.Action = "auth"
-	newPayload.Auth.Email = "admin@example.com"
-	newPayload.Auth.Password = "verysecret"
-
-	if requestPayload.Action == "" {
-		requestPayload = newPayload
-	}
-	log.Println(requestPayload)
 
 	err := ReadJSON(c, &requestPayload)
 	if err != nil {
@@ -54,13 +49,50 @@ func HandleSubmission(c *gin.Context) {
 		ErrorJSON(c, err)
 		return
 	}
+	log.Println("request payload", &requestPayload)
 
 	switch requestPayload.Action {
 	case "auth":
 		Authenticate(c, requestPayload.Auth)
+	case "log":
+		log.Println("enter here")
+		LogItem(c, requestPayload.Log)
 	default:
-		ErrorJSON(c, errors.New("unknown action"))
+		ErrorJSON(c, errors.New("unknown action "+requestPayload.Action+" enter here"))
 	}
+}
+
+func LogItem(c *gin.Context, entry LogPayload) {
+	jsonData, _ := json.MarshalIndent(entry, "", "\t")
+
+	logServiceUrl := "http://logger-service/log"
+
+	request, err := http.NewRequest("POST", logServiceUrl, bytes.NewBuffer(jsonData))
+	if err != nil {
+		ErrorJSON(c, err)
+		return
+	}
+	request.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		ErrorJSON(c, err)
+		return
+	}
+	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusAccepted {
+		ErrorJSON(c, errors.New("error log service"+err.Error()))
+		return
+	}
+
+	var payload jsonResponse
+	payload.Error = false
+	payload.Message = "logged"
+
+	// WriteJSON(c, http.StatusAccepted, payload)
+	c.JSON(http.StatusAccepted, payload)
 }
 
 func Authenticate(c *gin.Context, a AuthPayload) {
@@ -125,7 +157,6 @@ func Authenticate(c *gin.Context, a AuthPayload) {
 	payload.Data = jsonFromService.Data
 
 	// WriteJSON(c, http.StatusAccepted, payload)
-	c.Bind(payload)
 	c.JSON(http.StatusAccepted, payload)
 }
 

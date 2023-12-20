@@ -17,7 +17,7 @@ const (
 	webPort  = "80"
 	rpcPort  = "5001"
 	gRpcPort = "50001"
-	mongoURL = "mongodb://mongo:27071"
+	mongoURL = "mongodb://mongo:27017"
 )
 
 var client *mongo.Client
@@ -37,20 +37,13 @@ func CORSConfig() cors.Config {
 }
 
 func main() {
-	//connect to mongo
-	mongoClient, err := connectToMongo()
-	if err != nil {
-		log.Panic(err)
-	}
-	client = mongoClient
-
 	//create a context in order to disconnect
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
 	//close connection
 	defer func() {
-		if err = client.Disconnect(ctx); err != nil {
+		if err := client.Disconnect(ctx); err != nil {
 			panic(err)
 		}
 	}()
@@ -98,6 +91,7 @@ func connectToMongo() (*mongo.Client, error) {
 		log.Println("Error Connecting: ", err)
 		return nil, err
 	}
+	log.Println("Connected to Mongo")
 
 	return conn, nil
 }

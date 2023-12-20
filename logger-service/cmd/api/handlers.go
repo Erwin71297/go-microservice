@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"log-service/data"
 	"net/http"
 
@@ -21,11 +22,24 @@ func Ping(c *gin.Context) {
 }
 
 func WriteLog(c *gin.Context) {
+	//connect to mongo
+	mongoClient, err := connectToMongo()
+	if err != nil {
+		log.Panic(err)
+	}
+	client = mongoClient
+	log.Println("connected", client)
+
 	//Add model to writelog
 	mdl := data.New(client).LogEntry
 
 	//Read Json into var
 	var requestPayload JSONPayload
+	if requestPayload.Name == "" {
+		requestPayload.Name = "name"
+		requestPayload.Data = "Some kind of data"
+	}
+	log.Println("request Payload", requestPayload)
 	_ = ReadJSON(c, &requestPayload)
 
 	//Insert Data
@@ -34,7 +48,7 @@ func WriteLog(c *gin.Context) {
 		Data: requestPayload.Data,
 	}
 
-	err := mdl.Insert(event)
+	err = mdl.Insert(event)
 	if err != nil {
 		ErrorJSON(c, err)
 	}

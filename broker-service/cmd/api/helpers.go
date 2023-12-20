@@ -17,12 +17,11 @@ type jsonResponse struct {
 
 func ReadJSON(c *gin.Context, data any) error {
 	b, err := io.ReadAll(c.Request.Body)
-	if err == nil {
+	if err != nil {
 		return err
 	}
 
 	err = json.Unmarshal(b, data)
-	log.Println("data :", data)
 	if err != nil {
 		log.Println("masuk error unmarshal :", err.Error())
 		return err
