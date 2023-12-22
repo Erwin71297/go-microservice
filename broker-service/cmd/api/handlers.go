@@ -45,20 +45,18 @@ func HandleSubmission(c *gin.Context) {
 
 	err := ReadJSON(c, &requestPayload)
 	if err != nil {
-		log.Println("bahkan masih di sini")
 		ErrorJSON(c, err)
 		return
 	}
-	log.Println("request payload", &requestPayload)
 
 	switch requestPayload.Action {
 	case "auth":
+		log.Println("enter here")
 		Authenticate(c, requestPayload.Auth)
 	case "log":
-		log.Println("enter here")
 		LogItem(c, requestPayload.Log)
 	default:
-		ErrorJSON(c, errors.New("unknown action "+requestPayload.Action+" enter here"))
+		ErrorJSON(c, errors.New("unknown action"))
 	}
 }
 
@@ -96,32 +94,26 @@ func LogItem(c *gin.Context, entry LogPayload) {
 }
 
 func Authenticate(c *gin.Context, a AuthPayload) {
-	log.Println("enter here")
-
 	//Create some json that will be sent to the auth microservices
 	jsonData, _ := json.MarshalIndent(a, "", "\t")
-	log.Println("jsonData after ", jsonData)
-	jsonString := string(jsonData[:])
-	log.Println("jsonData string ", jsonString)
+
+	authServiceUrl := "http://authentication-service/authenticate"
 
 	//Call the service
-	request, err := http.NewRequest("POST", "http://authentication-service/authenticate", bytes.NewBuffer(jsonData))
+	request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
 	if err != nil {
-		log.Println("error req")
 		ErrorJSON(c, err)
 		return
 	}
+	request.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
-		log.Println("error res")
 		ErrorJSON(c, err)
 		return
 	}
 	defer response.Body.Close()
-
-	log.Println("response Status code: ", response)
 
 	//Make sure we get back the correct status
 	if response.StatusCode == http.StatusUnauthorized {

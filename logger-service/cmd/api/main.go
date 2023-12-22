@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"log-service/data"
 	"net/http"
 	"time"
 
@@ -21,10 +20,6 @@ const (
 )
 
 var client *mongo.Client
-
-type Config struct {
-	Models data.Models
-}
 
 func CORSConfig() cors.Config {
 	corsConfig := cors.DefaultConfig()
@@ -94,11 +89,4 @@ func connectToMongo() (*mongo.Client, error) {
 	log.Println("Connected to Mongo")
 
 	return conn, nil
-}
-
-func ApiMiddleware(cfg Config) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		c.Set("Config", cfg)
-		c.Next()
-	}
 }

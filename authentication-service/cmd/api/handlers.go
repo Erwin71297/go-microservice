@@ -20,13 +20,17 @@ var requestPayload struct {
 func Authenticate(c *gin.Context) {
 	log.Println("enter authenticate-service")
 
-	if requestPayload.Email == "" {
-		requestPayload.Email = "admin@example.com"
-		requestPayload.Password = "verysecret"
-	}
-	log.Println("request Payload", requestPayload)
+	// if requestPayload.Email == "" {
+	// 	requestPayload.Email = "admin@example.com"
+	// 	requestPayload.Password = "verysecret"
+	// }
+	// log.Println("request Payload", requestPayload)
 
-	_ = ReadJSON(c, &requestPayload)
+	err := ReadJSON(c, &requestPayload)
+	if err != nil {
+		ErrorJSON(c, err)
+		return
+	}
 
 	//Validate the user against the database
 	db := data.New(connectToDB())
@@ -45,11 +49,11 @@ func Authenticate(c *gin.Context) {
 	}
 
 	// Log authentication
-	err = LogRequest("authentication", fmt.Sprintf("%s logged in", user.Email))
-	if err != nil {
-		ErrorJSON(c, err)
-		return
-	}
+	// err = LogRequest("authentication", fmt.Sprintf("%s logged in", user.Email))
+	// if err != nil {
+	// 	ErrorJSON(c, err)
+	// 	return
+	// }
 
 	payload := jsonResponse{
 		Error:   false,
