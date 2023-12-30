@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -37,10 +38,10 @@ func main() {
 	log.Println("Starting authentication service")
 
 	//connect DB
-	// conn := connectToDB()
-	// if conn == nil {
-	// 	log.Panic("Can't connect to Postgres!")
-	// }
+	conn := connectToDB()
+	if conn == nil {
+		log.Panic("Can't connect to Postgres!")
+	}
 	app := gin.Default()
 	app.Use(cors.New(CORSConfig()))
 	Routes(app)
@@ -68,8 +69,8 @@ func openDB(dsn string) (*sql.DB, error) {
 }
 
 func connectToDB() *sql.DB {
-	//dsn := os.Getenv("DSN")
-	dsn := "host=localhost port=5432 user=postgres password=password dbname=users sslmode=disable timezone=UTC connect_timeout=15"
+	dsn := os.Getenv("DSN")
+	//dsn := "host=localhost port=5432 user=postgres password=password dbname=users sslmode=disable timezone=UTC connect_timeout=15"
 
 	for {
 		connection, err := openDB(dsn)

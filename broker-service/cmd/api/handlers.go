@@ -59,7 +59,6 @@ func HandleSubmission(c *gin.Context) {
 
 	switch requestPayload.Action {
 	case "auth":
-		log.Println("enter here")
 		Authenticate(c, requestPayload.Auth)
 	case "log":
 		LogItem(c, requestPayload.Log)
@@ -91,7 +90,7 @@ func LogItem(c *gin.Context, entry LogPayload) {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusAccepted {
-		ErrorJSON(c, errors.New("error log service"+err.Error()))
+		ErrorJSON(c, errors.New("error log service"))
 		return
 	}
 
@@ -112,6 +111,7 @@ func Authenticate(c *gin.Context, a AuthPayload) {
 	//Call the service
 	request, err := http.NewRequest("POST", authServiceUrl, bytes.NewBuffer(jsonData))
 	if err != nil {
+		log.Println("error request handler", err)
 		ErrorJSON(c, err)
 		return
 	}
@@ -120,19 +120,17 @@ func Authenticate(c *gin.Context, a AuthPayload) {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
+		log.Println("error response handler", err)
 		ErrorJSON(c, err)
 		return
 	}
 	defer response.Body.Close()
 
 	//Make sure we get back the correct status
-	if response.StatusCode == http.StatusUnauthorized {
-		log.Println("error code 1")
+	log.Println("status code :", response.StatusCode)
+	if response.StatusCode != http.StatusAccepted {
+		log.Println("error response status code")
 		ErrorJSON(c, errors.New("invalid credentials"))
-		return
-	} else if response.StatusCode != http.StatusAccepted {
-		log.Println("error code 2")
-		ErrorJSON(c, errors.New("error calling auth service"+err.Error()))
 		return
 	}
 
@@ -171,6 +169,7 @@ func SendMail(c *gin.Context, msg MailPayload) {
 	// post to mail service
 	request, err := http.NewRequest("POST", mailServiceURL, bytes.NewBuffer(jsonData))
 	if err != nil {
+		log.Println("error request handler", err)
 		ErrorJSON(c, err)
 		return
 	}
@@ -180,6 +179,7 @@ func SendMail(c *gin.Context, msg MailPayload) {
 	client := &http.Client{}
 	response, err := client.Do(request)
 	if err != nil {
+		log.Println("error response handler", err)
 		ErrorJSON(c, err)
 		return
 	}
