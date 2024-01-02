@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -28,6 +29,7 @@ func SendMail(c *gin.Context) {
 
 	err := ReadJSON(c, &requestPayload)
 	if err != nil {
+		log.Println("error read json")
 		ErrorJSON(c, err)
 		return
 	}
@@ -41,6 +43,7 @@ func SendMail(c *gin.Context) {
 
 	err = Mailer.SendSMTPMessage(msg)
 	if err != nil {
+		log.Println("send smtp error", err)
 		ErrorJSON(c, err)
 		return
 	}

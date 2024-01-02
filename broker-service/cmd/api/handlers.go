@@ -63,6 +63,7 @@ func HandleSubmission(c *gin.Context) {
 	case "log":
 		LogItem(c, requestPayload.Log)
 	case "mail":
+		log.Println("enter here")
 		SendMail(c, requestPayload.Mail)
 	default:
 		ErrorJSON(c, errors.New("unknown action"))
@@ -161,6 +162,7 @@ func Authenticate(c *gin.Context, a AuthPayload) {
 }
 
 func SendMail(c *gin.Context, msg MailPayload) {
+	log.Println("enter here")
 	jsonData, _ := json.MarshalIndent(msg, "", "\t")
 
 	// call the mail service
@@ -187,6 +189,7 @@ func SendMail(c *gin.Context, msg MailPayload) {
 
 	//Make sure we get back the right status code
 	if response.StatusCode != http.StatusAccepted {
+		log.Println("error status code")
 		ErrorJSON(c, errors.New("error calling mail service"))
 	}
 
