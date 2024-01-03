@@ -1,11 +1,13 @@
 package main
 
 import (
+	"broker/event"
 	"bytes"
 	"encoding/json"
 	"errors"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -61,7 +63,8 @@ func HandleSubmission(c *gin.Context) {
 	case "auth":
 		Authenticate(c, requestPayload.Auth)
 	case "log":
-		LogItem(c, requestPayload.Log)
+		//LogItem(c, requestPayload.Log)
+		LogEventViaRabbit(c, requestPayload.Log)
 	case "mail":
 		log.Println("enter here")
 		SendMail(c, requestPayload.Mail)
@@ -199,6 +202,47 @@ func SendMail(c *gin.Context, msg MailPayload) {
 	payload.Message = "Message sent to " + msg.To
 
 	c.JSON(http.StatusAccepted, payload)
+}
+
+func LogEventViaRabbit(c *gin.Context, l LogPayload) {
+	err := PushToQueue(c, l.Name, l.Data)
+	if err != nil {
+		log.Println("error push to queue")
+		ErrorJSON(c, err)
+	}
+
+	var payload jsonResponse
+	payload.Error = false
+	payload.Message = "logged via RabbitMQ"
+
+	c.JSON(http.StatusAccepted, payload)
+}
+
+func PushToQueue(c *gin.Context, name, msg string) error {
+	rabbitConn, err := Connect()
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+	defer rabbitConn.Close()
+
+	emitter, err := event.NewEventEmitter(rabbitConn)
+	if err != nil {
+		return err
+	}
+
+	payload := LogPayload{
+		Name: name,
+		Data: msg,
+	}
+
+	j, _ := json.MarshalIndent(&payload, "", "\t")
+	err = emitter.Push(c, string(j), "log.INFO")
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func Ping(c *gin.Context) {
