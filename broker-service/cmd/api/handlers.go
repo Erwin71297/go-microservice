@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"net/rpc"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -32,6 +33,11 @@ type AuthPayload struct {
 }
 
 type LogPayload struct {
+	Name string `json:"name"`
+	Data string `json:"data"`
+}
+
+type RPCPayload struct {
 	Name string `json:"name"`
 	Data string `json:"data"`
 }
@@ -64,9 +70,10 @@ func HandleSubmission(c *gin.Context) {
 		Authenticate(c, requestPayload.Auth)
 	case "log":
 		//LogItem(c, requestPayload.Log)
-		LogEventViaRabbit(c, requestPayload.Log)
+		//LogEventViaRabbit(c, requestPayload.Log)
+		log.Println("enter here to log")
+		LogItemViaRPC(c, requestPayload.Log)
 	case "mail":
-		log.Println("enter here")
 		SendMail(c, requestPayload.Mail)
 	default:
 		ErrorJSON(c, errors.New("unknown action"))
@@ -245,8 +252,40 @@ func PushToQueue(c *gin.Context, name, msg string) error {
 	return nil
 }
 
-func Ping(c *gin.Context) {
+func LogItemViaRPC(c *gin.Context, l LogPayload) {
+	log.Println("entered log item via rpc")
+	client, err := rpc.Dial("tcp", "logger-service:5001")
+	if err != nil {
+		log.Println("error in client")
+		ErrorJSON(c, err)
+		return
+	}
 
+	rpcPayload := RPCPayload{
+		Name: l.Name,
+		Data: l.Data,
+	}
+	log.Println("client: ", client)
+
+	var result string
+	log.Println("rpc Payload: ", rpcPayload)
+	//log.Println("error is: ", client.Call("RPCServer.LogInfo", rpcPayload, &result))
+	err = client.Call("RPCServer.LogInfo", rpcPayload, &result)
+	if err != nil {
+		log.Println("error in result")
+		ErrorJSON(c, err)
+		return
+	}
+
+	payload := jsonResponse{
+		Error:   false,
+		Message: result,
+	}
+
+	c.JSON(http.StatusAccepted, payload)
+}
+
+func Ping(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"message": "pong",
 	})

@@ -2,8 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"log-service/data"
+	"net"
 	"net/http"
+	"net/rpc"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -31,6 +35,10 @@ func CORSConfig() cors.Config {
 	return corsConfig
 }
 
+type Config struct {
+	Models data.Models
+}
+
 func main() {
 	//create a context in order to disconnect
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -48,15 +56,19 @@ func main() {
 	app.Use(cors.New(CORSConfig()))
 	Routes(app)
 
+	//Register the RPC Server
+	err := rpc.Register(new(RPCServer))
+	log.Println("Here error of Register: ", err) // No error just now
+	go RPCListen()
+
 	//Setup Listen and serve
-	//go Serve(app)
 	log.Println("Starting service on port: ", webPort)
 	srv := &http.Server{
 		Addr:    ":" + webPort,
 		Handler: app,
 	}
 
-	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+	if err = srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
 	}
 }
@@ -69,6 +81,24 @@ func Serve(c *gin.Engine) {
 
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("listen: %s\n", err)
+	}
+}
+
+func RPCListen() error {
+	log.Println("Starting RPC server on port: ", rpcPort)
+	listen, err := net.Listen("tcp", fmt.Sprintf("0.0.0.0:%s", rpcPort))
+	if err != nil {
+		return err
+	}
+	defer listen.Close()
+
+	for {
+		rpcConn, err := listen.Accept()
+		if err != nil {
+			log.Println("error rpcConn", err)
+			continue
+		}
+		go rpc.ServeConn(rpcConn)
 	}
 }
 
