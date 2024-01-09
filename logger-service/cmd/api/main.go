@@ -58,8 +58,9 @@ func main() {
 
 	//Register the RPC Server
 	err := rpc.Register(new(RPCServer))
-	log.Println("Here error of Register: ", err) // No error just now
 	go RPCListen()
+
+	go gRPCListen()
 
 	//Setup Listen and serve
 	log.Println("Starting service on port: ", webPort)

@@ -50,6 +50,51 @@ func (l *LogEntry) Insert(entry LogEntry) error {
 	return nil
 }
 
+func (l *LogEntry) InsertGRPC(entry LogEntry) error {
+
+	// connect to mongo
+	mongoClient, err := connectToMongo()
+	if err != nil {
+		log.Panic(err)
+	}
+	client = mongoClient
+
+	collection := client.Database("logs").Collection("logs")
+
+	_, err = collection.InsertOne(context.TODO(), LogEntry{
+		Name:      entry.Name,
+		Data:      entry.Data,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	})
+	if err != nil {
+		log.Println("Error inserting into logs: ", err)
+		return err
+	}
+
+	return nil
+}
+
+func connectToMongo() (*mongo.Client, error) {
+	var mongoURL = "mongodb://mongo:27017"
+	// Create connection options
+	clientOptions := options.Client().ApplyURI(mongoURL)
+	clientOptions.SetAuth(options.Credential{
+		Username: "admin",
+		Password: "password",
+	})
+
+	//connect
+	conn, err := mongo.Connect(context.TODO(), clientOptions)
+	if err != nil {
+		log.Println("Error Connecting: ", err)
+		return nil, err
+	}
+	log.Println("Connected to Mongo")
+
+	return conn, nil
+}
+
 func (l *LogEntry) All() ([]*LogEntry, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()

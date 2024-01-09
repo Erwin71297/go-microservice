@@ -11,4 +11,5 @@ func Routes(app *gin.Engine) {
 	//Routes
 	app.POST("/broker", Broker)
 	app.POST("/handler", HandleSubmission)
+	app.POST("/log-grpc", LogViaGRPC)
 }
