@@ -4,4 +4,4 @@ RUN mkdir /app
 
 COPY listenerApp /app
 
-CMD [ "/app/listenerApp" ]
+CMD [ "/app/listenerApp"]

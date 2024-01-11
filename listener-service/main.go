@@ -16,7 +16,6 @@ func main() {
 	rabbitConn, err := Connect()
 	if err != nil {
 		log.Println(err)
-		os.Exit(1)
 	}
 	defer rabbitConn.Close()
 
