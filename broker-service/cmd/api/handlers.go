@@ -70,6 +70,7 @@ func HandleSubmission(c *gin.Context) {
 
 	switch requestPayload.Action {
 	case "auth":
+		log.Println("enter here to auth")
 		Authenticate(c, requestPayload.Auth)
 	case "log":
 		//LogItem(c, requestPayload.Log)
@@ -77,6 +78,7 @@ func HandleSubmission(c *gin.Context) {
 		log.Println("enter here to log")
 		LogItemViaRPC(c, requestPayload.Log)
 	case "mail":
+		log.Println("enter here to mail")
 		SendMail(c, requestPayload.Mail)
 	default:
 		ErrorJSON(c, errors.New("unknown action"))
@@ -117,6 +119,7 @@ func LogItem(c *gin.Context, entry LogPayload) {
 }
 
 func Authenticate(c *gin.Context, a AuthPayload) {
+	log.Println("enter auth")
 	//Create some json that will be sent to the auth microservices
 	jsonData, _ := json.MarshalIndent(a, "", "\t")
 
@@ -175,7 +178,7 @@ func Authenticate(c *gin.Context, a AuthPayload) {
 }
 
 func SendMail(c *gin.Context, msg MailPayload) {
-	log.Println("enter here")
+	log.Println("enter send mail")
 	jsonData, _ := json.MarshalIndent(msg, "", "\t")
 
 	// call the mail service
