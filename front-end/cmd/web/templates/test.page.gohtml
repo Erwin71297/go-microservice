@@ -63,7 +63,7 @@
             header: headers,
         }
 
-        fetch("http:\/\/localhost:8080/handler", body)
+        fetch("{{print .BrokerURL "/handler"}}", body)
         .then((response) => response.json())
         .then((data) => {
             sent.innerHTML = JSON.stringify(payload, undefined, 4);
@@ -97,7 +97,7 @@
             header: headers,
         }
 
-        fetch("http:\/\/localhost:8080/log-grpc", body)
+        fetch("{{print .BrokerURL "/log-grpc"}}", body)
         .then((response) => response.json())
         .then((data) => {
             sent.innerHTML = JSON.stringify(payload, undefined, 4);
@@ -132,7 +132,7 @@
             header: headers,
         }
 
-        fetch("http:\/\/localhost:8080/handler", body)
+        fetch("{{print .BrokerURL "/handler"}}", body)
         .then((response) => response.json())
         .then((data) => {
             sent.innerHTML = JSON.stringify(payload, undefined, 4);
@@ -169,7 +169,7 @@
             header: headers,
         }
 
-        fetch("http:\/\/localhost:8080/handler", body)
+        fetch("{{print .BrokerURL "/handler"}}", body)
         .then((response) => response.json())
         .then((data) => {
             sent.innerHTML = JSON.stringify(payload, undefined, 4);
@@ -190,7 +190,7 @@
             method: "POST",
         }
 
-        fetch("http:\/\/localhost:8080/broker", body)
+        fetch("{{print .BrokerURL "/broker"}}", body)
         .then((response) => response.json())
         .then((data) => {
             sent.innerHTML ="empty post request";
